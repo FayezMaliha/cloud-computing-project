@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Cloud Computing</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="templates/css/main.css" />
+	</head>
+	<body>
+		<div id="page-wrapper">
+
+			<!-- Header -->
+			
+				<div id="header-wrapper">
+					<div class="container">
+						<div class="row">
+							<div class="col-12">
+
+								<header id="header">
+									<h1><a href="/" id="logo">Cloud Project</a></h1>
+									<nav id="nav">
+										<a href="/" class="current-page-item">Homepage</a>
+										<a href="twocolumn1">Key / Image</a>
+										<a href="twocolumn2">All Keys</a>
+										<a href="onecolumn">Memory Cache</a>
+										<a href="threecolumn">Current Statistics</a>
+									</nav>
+								</header>
+
+							</div>
+						</div>
+					</div>
+				</div>
+
+			<!-- Banner -->
+				<div id="banner-wrapper">
+					<div class="container">
+						<div id="banner">
+							<h2>Upload your image bellow &#x2193</h2>
+							<!-- <span>And put something almost as cool here, but a bit longer ...</span> -->
+					    
+						</div>	
+					</div>
+				</div>
+
+			<!-- Main -->
+				<div id="main">
+  					<!-- <div class="w3-panel w3-border w3-hover-border-red"> -->
+
+						<form class="form-inline" enctype="multipart/form-data" action="/post_key_image" method="post">
+							<label for="text">Key : </label>
+							<input type="text" id="text" placeholder="Enter Key" name="Key" required>
+							<label for="pwd">Image : </label>
+	 						 <input type="file" id="myFile" name="filename" required>
+							  
+							<button type="submit">Submit</button>
+							{% with messages = get_flashed_messages() %}
+							  {% if messages %}
+								<ul class=flashes>
+								{% for message in messages %}
+								  <li>{{ message }}</li>
+								{% endfor %}
+								</ul>
+							  {% endif %}
+							{% endwith %}
+						</form>
+						
+						<div id="copyright">
+							&copy; Copy Right - 2022 </a>
+						</div>
+					<!-- </div> -->
+
+				</div>
+
+
+			<!-- Footer -->
+
+				<!-- <div id="footer-wrapper"> 
+
+							<!-- </div> -->
+				</div> -->
+
+		</div>
+
+		<!-- Scripts -->
+		s
+			<script src="templates/js/jquery.min.js"></script>
+			<script src="templates/js/browser.min.js"></script>
+			<script src="templates/js/breakpoints.min.js"></script>
+			<script src="templates/js/util.js"></script>
+			<script src="templates/js/main.js"></script>
+
+	</body>
+</html>
