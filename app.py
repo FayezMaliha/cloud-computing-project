@@ -5,8 +5,14 @@ from werkzeug.utils import secure_filename
 import os
 from flask_paginate import Pagination,get_page_args
 
-app = Flask(__name__,static_folder="G:/University/الفصل الاخير/flask/templates/")
+
+
+app = Flask(__name__,static_url_path = "/static",static_folder = "static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+app_dir = os.path.dirname(os.path.abspath(__file__))
+app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static')
+
 
 db = mysql.connector.connect(user='web', password='qwe@123', database='cloud')
 
@@ -21,7 +27,7 @@ def onecolumn():
 
 @app.route("/twocolumn1")
 def twocolumn1():
-    return render_template("twocolumn1.html",image_path='/templates/3322919-200.png')
+    return render_template("twocolumn1.html",image_path='/static/3322919-200.png')
 
 def get_keys(keys,offset=0,per_page=10):
     return keys[offset:offset+per_page]
@@ -45,13 +51,13 @@ def twocolumn2():
 def threecolumn():
     return render_template("threecolumn.html")
 
-@app.route('/post_key_image', methods =["POST"])
-def post_key_image():
+@app.route('/put', methods =["POST"])
+def put():
     cursor = db.cursor()
     image_key = request.form.get("Key")
     image = request.files.get('filename')
     image_value = secure_filename(image.filename)
-    image.save(os.path.join(f"{os.getcwd()}\\templates", image_value))
+    image.save(os.path.join(f"{os.getcwd()}\\static", image_value))
     try:
         cursor.execute('INSERT INTO key_image (image_key,image_value) VALUES (%s,%s)',
                         (image_key,image_value,))
@@ -63,8 +69,8 @@ def post_key_image():
     flash('image added successfuly !')
     return render_template("index.html")
 
-@app.route('/get_image', methods =["POST"])
-def get_image():
+@app.route('/get', methods =["POST"])
+def get():
     image_key = request.form.get("Key")
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM key_image WHERE image_key = %s', (image_key,))
@@ -72,10 +78,10 @@ def get_image():
     cursor.close()
     if image_path:
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_path=f'/templates/{image_path[0][1]}')
+        return render_template("twocolumn1.html",image_path=f'/static/{image_path[0][1]}')
     else:
         flash('key doesn\'t exist !!')
-        return render_template("twocolumn1.html",image_path='/templates/3322919-200.png')
+        return render_template("twocolumn1.html",image_path='/static/3322919-200.png')
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
