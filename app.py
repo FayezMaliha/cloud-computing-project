@@ -43,7 +43,7 @@ def twocolumn2():
     keys_len = len(keys)
     pagination_keys = get_keys(keys = keys,offset=offset,per_page=per_page)
 
-    pagination =Pagination(page=page,per_page=per_page,total=keys_len,css_framework='foundation')
+    pagination = Pagination(page=page,per_page=per_page,total=keys_len,css_framework='foundation')
     return render_template("twocolumn2.html",keys=pagination_keys, page=page,
                              per_page=per_page,pagination=pagination)
 
