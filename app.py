@@ -13,10 +13,10 @@ app = Flask(__name__,static_url_path = "/static",static_folder = "static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
-app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static')
+app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'uploads')
 
 db = mysql.connector.connect(user='web', password='qwe@123', database='cloud')
-cache = ImageCache()
+cache = ImageCache(app.config['UPLOAD_FOLDER'])
 
 @app.route("/")
 def index():
@@ -41,19 +41,19 @@ def onecolumn():
 
 @app.route("/twocolumn1")
 def twocolumn1():
-    return render_template("twocolumn1.html",image_path='/static/uploads/notfound.png')
+    return render_template("twocolumn1.html",image_path='/uploads/notfound.png')
 
 def get_keys(keys,offset=0,per_page=10):
     return keys[offset:offset+per_page]
 
 @app.route("/twocolumn2")
-def twocolumn2():   
+def twocolumn2():
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM key_image')
     keys = cursor.fetchall()
     cursor.close()
     page,per_page,offset = get_page_args(page_parameter="page",per_page_parameter="per_page")
-    
+
     keys_len = len(keys)
     pagination_keys = get_keys(keys = keys,offset=offset,per_page=per_page)
 
@@ -95,7 +95,7 @@ def put():
                         (image_value,image_key,))
     db.commit()
     cursor.close()
-    cache.put(key= image_key, image=  image_value)
+    cache.put(key= image_key, image= image_value)
     flash('image added successfuly !')
     return render_template("index.html")
 
@@ -113,10 +113,11 @@ def get():
     if image_p:
         cache.put(key= image_key, image= image_p[0][1])
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_path=f'/static/uploads/{image_p[0][1]}')
+
+        return render_template("twocolumn1.html",image_path=os.path.join(f"{os.getcwd()}\\uploads", image_path))
     else:
         flash('key doesn\'t exist !!')
-        return render_template("twocolumn1.html",image_path='/static/uploads/notfound.png')
+        return render_template("twocolumn1.html",image_path='/uploads/notfound.png')
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
@@ -133,7 +134,7 @@ def delete_key():
 
 def storeStats():
     cursor = db.cursor()
-    cursor.execute(f''' INSERT INTO cache (no_of_items, no_of_req_served, total_size, miss_rate, hit_rate) VALUES (%s, %s, %s, %s, %s) ''', 
+    cursor.execute(f''' INSERT INTO cache (no_of_items, no_of_req_served, total_size, miss_rate, hit_rate) VALUES (%s, %s, %s, %s, %s) ''',
     (cache.count(), cache.requsts , cache.sizeMB(), cache.missRate(), cache.hitRate()))
     db.commit()
     cursor.close()
@@ -151,7 +152,7 @@ if __name__ == "__main__":
         id INT AUTO_INCREMENT PRIMARY KEY,
         no_of_items INT,
         no_of_req_served INT,
-        total_size INT,
+        total_size FLOAT,
         miss_rate FLOAT,
         hit_rate FLOAT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -179,7 +180,7 @@ if __name__ == "__main__":
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=storeStats, trigger="interval", seconds=60*10)
-    scheduler.start()    
-    
+    scheduler.start()
+
     atexit.register(lambda: scheduler.shutdown())
     app.run(debug=True)

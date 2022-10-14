@@ -9,7 +9,7 @@
 		<title>Cloud Computing</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="static/css/main.css" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
 	</head>
 	<body>
 		<div id="page-wrapper">
@@ -48,7 +48,7 @@
 							<th></th>
 							<th>Result</th>
 						</tr>
-					     
+
 						<tr><td><h3> Number of items </h3></td> <td>{{items}}</td> </tr>
 						<tr><td><h3> Number of requests served</h3></td> <td> {{requsts}} </td></tr>
 						<tr><td><h3> Total size of items</h3></td> <td> {{size}} </tr>
@@ -63,11 +63,11 @@
 		</div>
 
 		<!-- Scripts -->
-			<script src="static/js/jquery.min.js"></script>
-			<script src="static/js/browser.min.js"></script>
-			<script src="static/js/breakpoints.min.js"></script>
-			<script src="static/js/util.js"></script>
-			<script src="static/js/main.js"></script>
+		<script src="{{ url_for('static', filename='/js/jquery.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/browser.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/breakpoints.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/util.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/main.js') }}"></script>
 
 	</body>
 </html>

@@ -1,4 +1,4 @@
-class Node:    
+class Node:
     def __init__(self, key = None ,value = None, previous = None ,next = None):
         self.value = value
         self.key = key
@@ -37,7 +37,10 @@ class DoublyLinkedList:
             self.head = self.head.next
         elif(node == self.tail):
             self.tail = self.tail.previous
-            self.tail.next = None
+            if(self.tail != None):
+                self.tail.next = None
         else:
             node.previous.next = node.next
             node.next.previous = node.previous
+            node.next = None
+            node.previous = None

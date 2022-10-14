@@ -31,9 +31,9 @@ class Cache():
         return value
 
     def dropLast(self):
-            node = self.list.tail
-            self.list.dropNode(node)
-            return self.items.pop(node.key)
+        node = self.list.tail
+        self.list.dropNode(node)
+        return self.items.pop(node.key)
 
     def clear(self):
         self.items.clear()
