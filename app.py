@@ -13,7 +13,7 @@ app = Flask(__name__,static_url_path = "/static",static_folder = "static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
-app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'uploads')
+app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static/uploads')
 
 db = mysql.connector.connect(user='web', password='qwe@123', database='cloud')
 cache = ImageCache(app.config['UPLOAD_FOLDER'])
@@ -41,7 +41,7 @@ def onecolumn():
 
 @app.route("/twocolumn1")
 def twocolumn1():
-    return render_template("twocolumn1.html",image_path='/uploads/notfound.png')
+    return render_template("twocolumn1.html",image_path='static/uploads/notfound.png')
 
 def get_keys(keys,offset=0,per_page=10):
     return keys[offset:offset+per_page]
@@ -117,7 +117,7 @@ def get():
         return render_template("twocolumn1.html",image_path=os.path.join(f"{os.getcwd()}\\uploads", image_p))
     else:
         flash('key doesn\'t exist !!')
-        return render_template("twocolumn1.html",image_path='/uploads/notfound.png')
+        return render_template("twocolumn1.html",image_path='static/uploads/notfound.png')
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
