@@ -114,7 +114,7 @@ def get():
         cache.put(key= image_key, image= image_p[0][1])
         flash(f'image for key {image_key}')
 
-        return render_template("twocolumn1.html",image_path=os.path.join(f"{os.getcwd()}\\uploads", image_path))
+        return render_template("twocolumn1.html",image_path=os.path.join(f"{os.getcwd()}\\uploads", image_p))
     else:
         flash('key doesn\'t exist !!')
         return render_template("twocolumn1.html",image_path='/uploads/notfound.png')
