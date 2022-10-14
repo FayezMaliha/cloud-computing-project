@@ -40,7 +40,7 @@ class ImageCache():
 
     def drop(self, key):
         image = self.cache.drop(key = key)
-        self.size -= os.stat(os.path.join(self.images_path, image)).st_size
+        self.size -= os.stat(os.path.join(self.images_path, image.value)).st_size
 
     def updateConfig(self, maxSizeByte, lru):
         self.maxSizeByte = maxSizeByte

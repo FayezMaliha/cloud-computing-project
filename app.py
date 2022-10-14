@@ -72,12 +72,12 @@ def threecolumn():
     size = cache.sizeMB()
     miss_rate = cache.missRate()
     hit_rate = cache.hitRate()
-    if(stats != None and len(stats) != 0):
-        items = stats[0][1]
-        requsts = stats[0][2]
-        size = stats[0][3]
-        miss_rate = stats[0][4]
-        hit_rate = stats[0][5]
+    # if(stats != None and len(stats) != 0):
+    #     items = stats[0][1]
+    #     requsts = stats[0][2]
+    #     size = stats[0][3]
+    #     miss_rate = stats[0][4]
+    #     hit_rate = stats[0][5]
     return render_template("threecolumn.html", items=items, requsts=requsts, size=size, miss_rate=miss_rate, hit_rate=hit_rate)
 
 @app.route('/put', methods =["POST"])
@@ -113,8 +113,7 @@ def get():
     if image_p:
         cache.put(key= image_key, image= image_p[0][1])
         flash(f'image for key {image_key}')
-
-        return render_template("twocolumn1.html",image_path=os.path.join(f"{os.getcwd()}\\uploads", image_p))
+        return render_template("twocolumn1.html",image_path=f'/static/uploads/{image_p[0][1]}')
     else:
         flash('key doesn\'t exist !!')
         return render_template("twocolumn1.html",image_path='static/uploads/notfound.png')
@@ -122,7 +121,7 @@ def get():
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
     key = request.form.get('key_to_delete')
-    if(cache.get(key) != None):
+    if cache.get(key):
         cache.drop(key)
     cursor = db.cursor()
     cursor.execute(f'DELETE FROM key_image WHERE image_key=%s',(key,))
