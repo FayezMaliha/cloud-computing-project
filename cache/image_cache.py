@@ -1,4 +1,5 @@
 from .cache import Cache
+import os
 
 class ImageCache():
     cache = Cache()
@@ -7,21 +8,22 @@ class ImageCache():
     hits = 0
     miss = 0
 
-    def __init__(self, maxSizeByte = 2 * 1024 * 1024, lru = True):
+    def __init__(self, images_path, maxSizeByte = 2 * 1024 * 1024, lru = True):
         self.maxSizeByte = maxSizeByte
         self.lru = lru
+        self.images_path = images_path
 
     def put(self, key, image):
-        imageSize = len(image)
+        imageSize = os.stat(os.path.join(self.images_path, image)).st_size
         while(self.size + imageSize > self.maxSizeByte):
+            if(self.count() == 0):
+                return
+            droped = None
             if(self.lru):
-                last = self.cache.dropLast()
-                if(last != None):
-                    self.size -= len(last.value)
+                droped = self.cache.dropLast()
             else:
-                r = self.cache.dropRandom()
-                if(r != None):
-                    self.size -= len(r.value)
+                droped = self.cache.dropRandom()
+            self.size -= os.stat(os.path.join(self.images_path, droped.value)).st_size
         self.cache.put(key= key, value= image)
         self.size += imageSize
 
@@ -38,7 +40,7 @@ class ImageCache():
 
     def drop(self, key):
         image = self.cache.drop(key = key)
-        self.size = len(image)
+        self.size -= os.stat(os.path.join(self.images_path, image)).st_size
 
     def updateConfig(self, maxSizeByte, lru):
         self.maxSizeByte = maxSizeByte
@@ -66,4 +68,4 @@ class ImageCache():
         return len(self.cache.items)
 
     def sizeMB(self):
-        return self.size /(1024 * 1024 * 8)
+        return self.size /(1024 * 1024)
