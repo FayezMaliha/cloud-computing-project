@@ -9,7 +9,7 @@
 		<title>Cloud Computing</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="templates/css/main.css" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
 	</head>
 	<body>
 		<div id="page-wrapper">
@@ -39,7 +39,7 @@
 			<!-- Main -->
 				<div id="main">
 					<h3 class="center1"  background-color="lightblue" > <u>here you can see all keys that stored in database</u></h3>
-					
+
 				  <div class="center1">
 					{% with messages = get_flashed_messages() %}
 							  {% if messages %}
@@ -102,11 +102,11 @@
 
 		<!-- Scripts -->
 
-			<script src="templates/js/jquery.min.js"></script>
-			<script src="templates/js/browser.min.js"></script>
-			<script src="templates/js/breakpoints.min.js"></script>
-			<script src="templates/js/util.js"></script>
-			<script src="templates/js/main.js"></script>
+		<script src="{{ url_for('static', filename='/js/jquery.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/browser.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/breakpoints.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/util.js') }}"></script>
+		<script src="{{ url_for('static', filename='/js/main.js') }}"></script>
 
 	</body>
 </html>
