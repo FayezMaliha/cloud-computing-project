@@ -41,7 +41,7 @@ def onecolumn():
 
 @app.route("/twocolumn1")
 def twocolumn1():
-    return render_template("twocolumn1.html",image_path='/static/images/notfound.png')
+    return render_template("twocolumn1.html",image_path='/static/uploads/notfound.png')
 
 def get_keys(keys,offset=0,per_page=10):
     return keys[offset:offset+per_page]
@@ -86,7 +86,7 @@ def put():
     image_key = request.form.get("Key")
     image = request.files.get('filename')
     image_value = secure_filename(image.filename)
-    image.save(os.path.join(f"{os.getcwd()}\\uploads", image_value))
+    image.save(os.path.join(f"{os.getcwd()}\\static\\uploads", image_value))
     try:
         cursor.execute('INSERT INTO key_image (image_key,image_value) VALUES (%s,%s)',
                         (image_key,image_value,))
@@ -95,7 +95,7 @@ def put():
                         (image_value,image_key,))
     db.commit()
     cursor.close()
-    cache.put(key= image_key, image= os.path.join(f"{os.getcwd()}\\uploads", image_value))
+    cache.put(key= image_key, image=  image_value)
     flash('image added successfuly !')
     return render_template("index.html")
 
@@ -104,18 +104,19 @@ def get():
     image_key = request.form.get("Key")
     cacheResult = cache.get(image_key)
     if(cacheResult != None):
-        return render_template("twocolumn1.html",image_path=f'/uploads/{cacheResult}')
+        flash(f'image for key {image_key}')
+        return render_template("twocolumn1.html",image_path=f'/static/uploads/{cacheResult}')
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM key_image WHERE image_key = %s', (image_key,))
-    image_path= cursor.fetchall()
+    image_p= cursor.fetchall()
     cursor.close()
-    if image_path:
-        cache.put(key= image_key, image= image_path)
+    if image_p:
+        cache.put(key= image_key, image= image_p[0][1])
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_path=f'/uploads/{image_path[0][1]}')
+        return render_template("twocolumn1.html",image_path=f'/static/uploads/{image_p[0][1]}')
     else:
         flash('key doesn\'t exist !!')
-        return render_template("twocolumn1.html",image_path='/static/images/notfound.png')
+        return render_template("twocolumn1.html",image_path='/static/uploads/notfound.png')
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
