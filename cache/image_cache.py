@@ -9,13 +9,12 @@ class ImageCache():
     hits = 0
     miss = 0
 
-    def __init__(self, images_path, maxSizeByte = 2 * 1024 * 1024, lru = True):
+    def __init__(self, maxSizeByte = 2 * 1024 * 1024, lru = True):
         self.maxSizeByte = maxSizeByte
         self.lru = lru
-        self.images_path = images_path
 
     def put(self, key, image):
-        imageSize = os.stat(os.path.join(self.images_path, image)).st_size
+        imageSize = len(image) * 3/4
         while(self.size + imageSize > self.maxSizeByte):
             if(self.count() == 0):
                 return
@@ -24,7 +23,7 @@ class ImageCache():
                 droped = self.cache.dropLast()
             else:
                 droped = self.cache.dropRandom()
-            self.size -= os.stat(os.path.join(self.images_path, droped.value)).st_size
+            self.size -= (len(droped.value) * 3/4)
         self.cache.put(key= key, value= image)
         self.size += imageSize
 

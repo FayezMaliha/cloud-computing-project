@@ -5,14 +5,14 @@ class Cache():
     list = DoublyLinkedList()
 
     def put(self, key, value):
-        if(key in self.items):
+        if key in self.items:
             self.list.dropNode(self.items[key])
         n = Node(key = key, value= value)
         self.items[key] = n
         self.list.addFirst(n)
 
     def get(self, key):
-        if(key in self.items):
+        if key in self.items:
             node = self.items[key]
             value = node.value
             self.list.dropNode(node)

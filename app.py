@@ -8,7 +8,9 @@ import os
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from cache.image_cache import ImageCache
-
+from PIL import Image
+import base64
+import io
 
 app = Flask(__name__,static_url_path = "/static",static_folder = "static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
@@ -17,7 +19,7 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static/uploads')
 
 db = mysql.connector.connect(user='web', password='qwe@123', database='cloud')
-cache = ImageCache(app.config['UPLOAD_FOLDER'])
+cache = ImageCache()
 
 @app.route("/")
 def index():
@@ -42,7 +44,12 @@ def onecolumn():
 
 @app.route("/twocolumn1")
 def twocolumn1():
-    return render_template("twocolumn1.html",image_path='static/uploads/notfound.png')
+    im = Image.open('static/images/notfound.png')
+    im =im.convert('RGB')
+    data = io.BytesIO()
+    im.save(data, "JPEG")
+    encoded_img_data = base64.b64encode(data.getvalue())
+    return render_template("twocolumn1.html",image_value=encoded_img_data.decode('utf-8'))
 
 def get_keys(keys,offset=0,per_page=10):
     return keys[offset:offset+per_page]
@@ -96,7 +103,12 @@ def put():
                         (image_value,image_key,))
     db.commit()
     cursor.close()
-    cache.put(key= image_key, image= image_value)
+    im = Image.open(os.path.join('static/uploads',image_value))
+    im =im.convert('RGB')
+    data = io.BytesIO()
+    im.save(data, "JPEG")
+    encoded_img_data = base64.b64encode(data.getvalue())
+    cache.put(key= image_key, image= encoded_img_data)
     flash('image added successfuly !')
     return render_template("index.html")
 
@@ -106,18 +118,28 @@ def get():
     cacheResult = cache.get(image_key)
     if(cacheResult != None):
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_path=f'/static/uploads/{cacheResult}')
+        return render_template("twocolumn1.html",image_value= cacheResult.decode('utf-8'))
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM key_image WHERE image_key = %s', (image_key,))
     image_p= cursor.fetchall()
     cursor.close()
     if image_p:
-        cache.put(key= image_key, image= image_p[0][1])
+        im = Image.open(os.path.join('static/uploads',image_p[0][1]))
+        im =im.convert('RGB')
+        data = io.BytesIO()
+        im.save(data, "JPEG")
+        encoded_img_data = base64.b64encode(data.getvalue())
+        cache.put(key= image_key, image= encoded_img_data)
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_path=f'/static/uploads/{image_p[0][1]}')
+        return render_template("twocolumn1.html",image_value= encoded_img_data.decode('utf-8'))
     else:
         flash('key doesn\'t exist !!')
-        return render_template("twocolumn1.html",image_path='static/uploads/notfound.png')
+        im = Image.open('static/images/notfound.png')
+        im =im.convert('RGB')
+        data = io.BytesIO()
+        im.save(data, "JPEG")
+        encoded_img_data = base64.b64encode(data.getvalue())
+        return render_template("twocolumn1.html",image_value= encoded_img_data.decode('utf-8'))
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
