@@ -1,3 +1,4 @@
+from operator import xor
 from .cache import Cache
 import os
 
@@ -42,9 +43,14 @@ class ImageCache():
         image = self.cache.drop(key = key)
         self.size -= os.stat(os.path.join(self.images_path, image.value)).st_size
 
-    def updateConfig(self, maxSizeByte, lru):
-        self.maxSizeByte = maxSizeByte
-        self.lru = lru
+    def updateMaxSizeByte(self, max):
+        self.maxSizeByte = max *1024 *1024
+
+    def updateLru(self):
+        if self.lru:
+            self.lru = False
+        else:
+            self.lru = True
 
     def missRate(self):
         if(self.requsts == 0):

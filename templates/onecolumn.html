@@ -51,11 +51,16 @@
 						<tr>
 							<th></th>
 							<th>Result</th>
+							<th>Edit</th>
 						</tr>
 
-						<tr><td><h3>Capacity (MB)</h3></td> <td>{{ capacity }}</td> </tr>
-						<tr><td><h3> Policy Replacement</h3></td> <td> {{ policy }} </tr>
-						<tr><td><h3>Do you want to clear the cache ?</h3></td> <td><button onclick="deletFunction()">Clear</button></td> </tr>
+						<tr><td><h3>Capacity (MB)</h3></td> <form enctype="multipart/form-data" action="/change_capacity" method="post"><td><input type="text" id="text" placeholder= {{capacity}} name="new_size" required></td> <td><button type="submit">Edit</button></td></form></tr>
+						<tr><td><h3> Policy Replacement</h3></td> <td> {{ policy }} <td><form action="/change_policy" method="post">
+																						<button name="change_policy" type="submit">Change Policy</button></form></td></tr>
+						<tr><td><h3>Do you want to clear the cache ?</h3></td><td colspan="2"><form action="/clear" method="post">
+							<button name="Clear" type="submit">Clear</button></form>
+						<!-- </form><button onclick="deletFunction()">Clear</button> -->
+					</td> </tr>
 
 						<tr></tr>
 					</table>

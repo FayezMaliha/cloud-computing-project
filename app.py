@@ -1,3 +1,4 @@
+from math import e
 from flask import Flask,redirect,url_for,render_template,request,flash
 from flask_paginate import Pagination,get_page_args
 from werkzeug.utils import secure_filename
@@ -72,12 +73,12 @@ def threecolumn():
     size = cache.sizeMB()
     miss_rate = cache.missRate()
     hit_rate = cache.hitRate()
-    # if(stats != None and len(stats) != 0):
-    #     items = stats[0][1]
-    #     requsts = stats[0][2]
-    #     size = stats[0][3]
-    #     miss_rate = stats[0][4]
-    #     hit_rate = stats[0][5]
+    if(stats != None and len(stats) != 0):
+        items = stats[0][1]
+        requsts = stats[0][2]
+        size = stats[0][3]
+        miss_rate = stats[0][4]
+        hit_rate = stats[0][5]
     return render_template("threecolumn.html", items=items, requsts=requsts, size=size, miss_rate=miss_rate, hit_rate=hit_rate)
 
 @app.route('/put', methods =["POST"])
@@ -139,6 +140,39 @@ def storeStats():
     cursor.close()
 
 
+@app.route('/clear', methods =["POST"])
+def clear():
+    cache.clear()
+    # storeStats()
+    return redirect(url_for('onecolumn'))
+
+@app.route('/change_policy', methods =["POST"])
+def change_policy():
+    cache.updateLru()
+    cursor = db.cursor()
+    if cache.lru:
+        cursor.execute('UPDATE cache_configuration SET policy_type_id = %s',
+                        (0,))
+    else:
+        cursor.execute('UPDATE cache_configuration SET policy_type_id = %s',
+                        (1,))
+    db.commit()
+    cursor.close()
+    return redirect(url_for('onecolumn'))
+
+
+@app.route('/change_capacity', methods =["POST"])
+def change_capacity():
+    new_size = request.form.get("new_size")
+    cache.updateMaxSizeByte(int(new_size))
+    cursor = db.cursor()
+    cursor.execute('UPDATE cache_configuration SET capacity = %s',
+                    (new_size,))
+
+    db.commit()
+    cursor.close()
+    return redirect(url_for('onecolumn'))
+
 if __name__ == "__main__":
     cursor = db.cursor()
     cursor.execute(''' CREATE TABLE IF NOT EXISTS key_image(
@@ -177,6 +211,11 @@ if __name__ == "__main__":
     db.commit()
     cursor.close()
 
+    cursor = db.cursor()
+    cursor.execute(f'SELECT * FROM cache_configuration')
+    config = cursor.fetchall()
+    cursor.close()
+    cache.updateMaxSizeByte(int(config[0][0]))
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=storeStats, trigger="interval", seconds=60*10)
     scheduler.start()

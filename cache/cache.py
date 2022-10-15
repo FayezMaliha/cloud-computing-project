@@ -49,4 +49,4 @@ class Cache():
         print(self.items)
 
     def count(self):
-        return len(items)
+        return len(self.items)
