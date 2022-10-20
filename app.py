@@ -12,14 +12,32 @@ from PIL import Image
 import base64
 import io
 
-app = Flask(__name__,static_url_path = "/static",static_folder = "static")
+
+app = Flask(
+            __name__,
+            static_url_path = "/static",
+            static_folder = "static"
+            )
+
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static/uploads')
 
-db = mysql.connector.connect(user='web', password='qwe@123', database='cloud')
+db = mysql.connector.connect(
+                             user='web',
+                             password='qwe@123',
+                             database='cloud'
+                             )
 cache = ImageCache()
+
+def convert_img_to_base64(path):
+    im = Image.open(path)
+    im =im.convert('RGB')
+    data = io.BytesIO()
+    im.save(data, "JPEG")
+    return base64.b64encode(data.getvalue())
+
 
 @app.route("/")
 def index():
@@ -40,16 +58,19 @@ def onecolumn():
     cursor.execute(f'SELECT * FROM policy_type WHERE id = {policy}')
     policy = cursor.fetchall()[0][1]
     cursor.close()
-    return render_template("onecolumn.html", policy = policy, capacity = capacity)
+    return render_template(
+                            "onecolumn.html",
+                            policy = policy,
+                            capacity = capacity
+                        )
 
 @app.route("/twocolumn1")
 def twocolumn1():
-    im = Image.open('static/images/notfound.png')
-    im =im.convert('RGB')
-    data = io.BytesIO()
-    im.save(data, "JPEG")
-    encoded_img_data = base64.b64encode(data.getvalue())
-    return render_template("twocolumn1.html",image_value=encoded_img_data.decode('utf-8'))
+    encoded_img_data = convert_img_to_base64('static/uploads/notfound.png')
+    return render_template(
+                            "twocolumn1.html",
+                            image_value=encoded_img_data.decode('utf-8')
+                         )
 
 def get_keys(keys,offset=0,per_page=10):
     return keys[offset:offset+per_page]
@@ -60,14 +81,31 @@ def twocolumn2():
     cursor.execute(f'SELECT * FROM key_image')
     keys = cursor.fetchall()
     cursor.close()
-    page,per_page,offset = get_page_args(page_parameter="page",per_page_parameter="per_page")
+    page,per_page,offset = get_page_args(
+                                         page_parameter="page",
+                                         per_page_parameter="per_page"
+                                        )
 
     keys_len = len(keys)
-    pagination_keys = get_keys(keys = keys,offset=offset,per_page=per_page)
+    pagination_keys = get_keys(
+                                keys = keys,
+                                offset=offset,
+                                per_page=per_page
+                            )
 
-    pagination = Pagination(page=page,per_page=per_page,total=keys_len,css_framework='foundation')
-    return render_template("twocolumn2.html",keys=pagination_keys, page=page,
-                             per_page=per_page,pagination=pagination)
+    pagination = Pagination(
+                            page=page,
+                            per_page=per_page,
+                            total=keys_len,
+                            css_framework='foundation'
+                            )
+    return render_template(
+                            "twocolumn2.html",
+                            keys=pagination_keys,
+                            page=page,
+                            per_page=per_page,
+                            pagination=pagination
+                        )
 
 @app.route("/threecolumn")
 def threecolumn():
@@ -86,7 +124,14 @@ def threecolumn():
         size = stats[0][3]
         miss_rate = stats[0][4]
         hit_rate = stats[0][5]
-    return render_template("threecolumn.html", items=items, requsts=requsts, size=size, miss_rate=miss_rate, hit_rate=hit_rate)
+    return render_template(
+                            "threecolumn.html",
+                            items=items,
+                            requsts=requsts,
+                            size=size,
+                            miss_rate=miss_rate,
+                            hit_rate=hit_rate
+                        )
 
 @app.route('/put', methods =["POST"])
 def put():
@@ -103,11 +148,7 @@ def put():
                         (image_value,image_key,))
     db.commit()
     cursor.close()
-    im = Image.open(os.path.join('static/uploads',image_value))
-    im =im.convert('RGB')
-    data = io.BytesIO()
-    im.save(data, "JPEG")
-    encoded_img_data = base64.b64encode(data.getvalue())
+    encoded_img_data = convert_img_to_base64(os.path.join('static/uploads',image_value))
     cache.put(key= image_key, image= encoded_img_data)
     flash('image added successfuly !')
     return render_template("index.html")
@@ -118,28 +159,29 @@ def get():
     cacheResult = cache.get(image_key)
     if(cacheResult != None):
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_value= cacheResult.decode('utf-8'))
+        return render_template(
+                                "twocolumn1.html",
+                                image_value=cacheResult.decode('utf-8')
+                            )
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM key_image WHERE image_key = %s', (image_key,))
     image_p= cursor.fetchall()
     cursor.close()
     if image_p:
-        im = Image.open(os.path.join('static/uploads',image_p[0][1]))
-        im =im.convert('RGB')
-        data = io.BytesIO()
-        im.save(data, "JPEG")
-        encoded_img_data = base64.b64encode(data.getvalue())
+        encoded_img_data = convert_img_to_base64(os.path.join('static/uploads',image_p[0][1]))
         cache.put(key= image_key, image= encoded_img_data)
         flash(f'image for key {image_key}')
-        return render_template("twocolumn1.html",image_value= encoded_img_data.decode('utf-8'))
+        return render_template(
+                                "twocolumn1.html",
+                                image_value= encoded_img_data.decode('utf-8')
+                            )
     else:
         flash('key doesn\'t exist !!')
-        im = Image.open('static/images/notfound.png')
-        im =im.convert('RGB')
-        data = io.BytesIO()
-        im.save(data, "JPEG")
-        encoded_img_data = base64.b64encode(data.getvalue())
-        return render_template("twocolumn1.html",image_value= encoded_img_data.decode('utf-8'))
+        encoded_img_data = convert_img_to_base64('static/uploads/notfound.png')
+        return render_template(
+                                "twocolumn1.html",
+                                image_value= encoded_img_data.decode('utf-8')
+                            )
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
@@ -156,8 +198,22 @@ def delete_key():
 
 def storeStats():
     cursor = db.cursor()
-    cursor.execute(f''' INSERT INTO cache (no_of_items, no_of_req_served, total_size, miss_rate, hit_rate) VALUES (%s, %s, %s, %s, %s) ''',
-    (cache.count(), cache.requsts , cache.sizeMB(), cache.missRate(), cache.hitRate()))
+    cursor.execute(
+                    f''' INSERT INTO cache (no_of_items,
+                                            no_of_req_served,
+                                            total_size,
+                                            miss_rate,
+                                            hit_rate
+                                            )
+                                            VALUES (%s, %s, %s, %s, %s) ''',
+                    (
+                     cache.count(),
+                     cache.requsts,
+                     cache.sizeMB(),
+                     cache.missRate(),
+                     cache.hitRate()
+                    )
+                )
     db.commit()
     cursor.close()
 
@@ -165,7 +221,6 @@ def storeStats():
 @app.route('/clear', methods =["POST"])
 def clear():
     cache.clear()
-    # storeStats()
     return redirect(url_for('onecolumn'))
 
 @app.route('/change_policy', methods =["POST"])
@@ -174,10 +229,12 @@ def change_policy():
     cursor = db.cursor()
     if cache.lru:
         cursor.execute('UPDATE cache_configuration SET policy_type_id = %s',
-                        (0,))
+                        (0,)
+                      )
     else:
         cursor.execute('UPDATE cache_configuration SET policy_type_id = %s',
-                        (1,))
+                        (1,)
+                      )
     db.commit()
     cursor.close()
     return redirect(url_for('onecolumn'))
@@ -189,13 +246,15 @@ def change_capacity():
     cache.updateMaxSizeByte(int(new_size))
     cursor = db.cursor()
     cursor.execute('UPDATE cache_configuration SET capacity = %s',
-                    (new_size,))
+                    (new_size,)
+                  )
 
     db.commit()
     cursor.close()
     return redirect(url_for('onecolumn'))
 
-if __name__ == "__main__":
+
+def initalize_database():
     cursor = db.cursor()
     cursor.execute(''' CREATE TABLE IF NOT EXISTS key_image(
         image_key VARCHAR(255) PRIMARY KEY,
@@ -224,15 +283,23 @@ if __name__ == "__main__":
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    cursor.execute(''' INSERT IGNORE INTO policy_type (id, type) VALUES (0, 'Least Recently Used') ''')
-    cursor.execute(''' INSERT IGNORE INTO policy_type (id ,type) VALUES (1, 'Random') ''')
+    cursor.execute(''' INSERT IGNORE INTO policy_type (id, type)
+                       VALUES (0, 'Least Recently Used') '''
+                  )
+    cursor.execute(''' INSERT IGNORE INTO policy_type (id ,type) 
+                       VALUES (1, 'Random') '''
+                  )
     cursor.execute(f'SELECT * FROM cache_configuration')
     config= cursor.fetchall()
     if(len(config) == 0):
-        cursor.execute(''' INSERT IGNORE INTO cache_configuration (capacity, policy_type_id) VALUES (2, 0) ''')
+        cursor.execute(''' INSERT IGNORE INTO cache_configuration
+                           (capacity, policy_type_id) VALUES (2, 0) '''
+                      )
     db.commit()
     cursor.close()
 
+if __name__ == "__main__":
+    initalize_database()
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM cache_configuration')
     config = cursor.fetchall()
@@ -241,6 +308,5 @@ if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=storeStats, trigger="interval", seconds=60*10)
     scheduler.start()
-
     atexit.register(lambda: scheduler.shutdown())
     app.run(debug=True)
