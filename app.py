@@ -108,6 +108,7 @@ def put():
     data = io.BytesIO()
     im.save(data, "JPEG")
     encoded_img_data = base64.b64encode(data.getvalue())
+    print(encoded_img_data)
     cache.put(key= image_key, image= encoded_img_data)
     flash('image added successfuly !')
     return render_template("index.html")

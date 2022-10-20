@@ -1,3 +1,4 @@
+from functools import cache
 from operator import xor
 from .cache import Cache
 import os
@@ -39,8 +40,10 @@ class ImageCache():
         self.size = 0
 
     def drop(self, key):
-        image = self.cache.drop(key = key)
-        self.size -= os.stat(os.path.join(self.images_path, image.value)).st_size
+        image = self.cache.get(key)
+        self.cache.drop(key = key)
+        imagesize = len(image) * 3/4
+        self.size -= imagesize
 
     def updateMaxSizeByte(self, max):
         self.maxSizeByte = max *1024 *1024
