@@ -32,6 +32,13 @@ db = mysql.connector.connect(
 cache = ImageCache()
 
 def convert_img_to_base64(path):
+    '''
+        description: this method is used to convert image to
+        base64 format so we can cache it and pass it to html
+        to show it 
+        input: path -> the path to image we want to convert
+        output: base64 encoded image
+    '''
     im = Image.open(path)
     im =im.convert('RGB')
     data = io.BytesIO()
@@ -41,17 +48,31 @@ def convert_img_to_base64(path):
 
 @app.route("/")
 def index():
+    '''
+        description: this is the main route where we return the main
+        page to user 
+        input: None
+        output: html page to show it
+    '''
     return render_template("index.html")
 
 @app.route("/onecolumn")
 def onecolumn():
+    '''
+        description: this route return the configuration page to show it and be able 
+        to change cache size and clear its content when we want.
+        we get the configuration from database if it has been set else
+        we use default values
+        input: None
+        output: configuration html page
+    '''
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM cache_configuration')
     config = cursor.fetchall()
     cursor.close()
     policy = 0
     capacity = 2
-    if(config is not None and len(config) != 0):
+    if config and len(config) != 0:
         capacity = config[0][0]
         policy = config[0][1]
     cursor = db.cursor()
@@ -66,6 +87,11 @@ def onecolumn():
 
 @app.route("/twocolumn1")
 def twocolumn1():
+    '''
+        description: this route is used to get the get image page 
+        input: None
+        output: get image html page
+    '''
     encoded_img_data = convert_img_to_base64('static/uploads/notfound.png')
     return render_template(
                             "twocolumn1.html",
@@ -73,10 +99,23 @@ def twocolumn1():
                          )
 
 def get_keys(keys,offset=0,per_page=10):
+    '''
+        description: this method is used to get items from array to 
+        use it in pagination when showing the keys
+        input: keys -> list of elements we want to show in pagination 
+                offset -> where to start getting the elements from the list
+                per_page -> number of elements we want to show per page
+        output: list of selected elements from the original list
+    '''
     return keys[offset:offset+per_page]
 
 @app.route("/twocolumn2")
 def twocolumn2():
+    '''
+        description: this route is used to show keys page in pages
+        input: None
+        output: show keys html page 
+    '''
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM key_image')
     keys = cursor.fetchall()
@@ -109,6 +148,12 @@ def twocolumn2():
 
 @app.route("/threecolumn")
 def threecolumn():
+    '''
+        description: this route is used to get cache configuration page and show
+        its the cache configuration from database
+        input: None
+        output: cache configuration html page
+    '''
     cursor = db.cursor()
     cursor.execute(f'SELECT * FROM cache ORDER BY created_at DESC LIMIT 1')
     stats= cursor.fetchall()
@@ -118,7 +163,7 @@ def threecolumn():
     size = cache.sizeMB()
     miss_rate = cache.missRate()
     hit_rate = cache.hitRate()
-    if(stats != None and len(stats) != 0):
+    if stats and len(stats) != 0:
         items = stats[0][1]
         requsts = stats[0][2]
         size = stats[0][3]
@@ -135,6 +180,14 @@ def threecolumn():
 
 @app.route('/put', methods =["POST"])
 def put():
+    '''
+        description: this route is used to add elements (key,image) to the
+        cache and uploads folder and we save the key and path on database 
+        input: key -> the key to the image we want to add
+               image -> the image we want to add
+        output: home page with image added successfuly message to notify that 
+        the process is done
+    '''
     cursor = db.cursor()
     image_key = request.form.get("Key")
     image = request.files.get('filename')
@@ -155,9 +208,17 @@ def put():
 
 @app.route('/get', methods =["POST"])
 def get():
+    '''
+        description: this route is used to get image and show it on the html
+        page if it is on cache and if it wasn't we get it's path from database
+        and show it but if it doesn't exist the user will be notified
+        input: key -> the key to the image we want to get
+        output: html page contains the image if it exist else the user will be
+        notified 
+    '''
     image_key = request.form.get("Key")
     cacheResult = cache.get(image_key)
-    if(cacheResult != None):
+    if cacheResult:
         flash(f'image for key {image_key}')
         return render_template(
                                 "twocolumn1.html",
@@ -185,6 +246,13 @@ def get():
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
+    '''
+        description: this route is used to delete key and its image from
+        cache and database
+        input: key -> the image key we want to delete
+        output: redirected to the same page with notification that the image
+        deleted successfuly
+    '''
     key = request.form.get('key_to_delete')
     if cache.get(key):
         cache.drop(key)
@@ -197,6 +265,12 @@ def delete_key():
 
 
 def storeStats():
+    '''
+        description: this method is used to store status for the cache
+        when it called which will be every 10 minutes
+        input: None
+        output: None
+    '''
     cursor = db.cursor()
     cursor.execute(
                     f''' INSERT INTO cache (no_of_items,
@@ -220,11 +294,22 @@ def storeStats():
 
 @app.route('/clear', methods =["POST"])
 def clear():
+    '''
+        description: this route is used to clear the cache from its content
+        when it called
+        input: None
+        output: None
+    '''
     cache.clear()
     return redirect(url_for('onecolumn'))
 
 @app.route('/change_policy', methods =["POST"])
 def change_policy():
+    '''
+        description: this route is used to change the deleting from cache policy 
+        input: None
+        output: None
+    '''
     cache.updateLru()
     cursor = db.cursor()
     if cache.lru:
@@ -242,6 +327,11 @@ def change_policy():
 
 @app.route('/change_capacity', methods =["POST"])
 def change_capacity():
+    '''
+        description: this route is used to change the capacity of cache in MB 
+        input: None
+        output: None
+    '''
     new_size = request.form.get("new_size")
     cache.updateMaxSizeByte(int(new_size))
     cursor = db.cursor()
@@ -255,6 +345,12 @@ def change_capacity():
 
 
 def initalize_database():
+    '''
+        description: this method is used to create tables in database if they 
+        didn't exist and initalize any values needed
+        input: None
+        output: None
+    '''
     cursor = db.cursor()
     cursor.execute(''' CREATE TABLE IF NOT EXISTS key_image(
         image_key VARCHAR(255) PRIMARY KEY,
@@ -291,7 +387,7 @@ def initalize_database():
                   )
     cursor.execute(f'SELECT * FROM cache_configuration')
     config= cursor.fetchall()
-    if(len(config) == 0):
+    if len(config) == 0:
         cursor.execute(''' INSERT IGNORE INTO cache_configuration
                            (capacity, policy_type_id) VALUES (2, 0) '''
                       )
