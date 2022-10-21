@@ -45,7 +45,7 @@ class ImageCache():
         imagesize = len(image) * 3/4
         self.size -= imagesize
 
-    def updateMaxSizeByte(self, max):
+    def updateMaxSizeMB(self, max):
         self.maxSizeByte = max *1024 *1024
 
     def updateLru(self):

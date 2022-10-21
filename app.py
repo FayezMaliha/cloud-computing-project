@@ -63,7 +63,7 @@ def twocolumn2():
     page,per_page,offset = get_page_args(page_parameter="page",per_page_parameter="per_page")
 
     keys_len = len(keys)
-    pagination_keys = get_keys(keys = keys,offset=offset,per_page=per_page)
+    pagination_keys = get_keys(keys = keys,offset=offset, per_page=per_page)
 
     pagination = Pagination(page=page,per_page=per_page,total=keys_len,css_framework='foundation')
     return render_template("twocolumn2.html",keys=pagination_keys, page=page,
@@ -80,6 +80,7 @@ def threecolumn():
     size = cache.sizeMB()
     miss_rate = cache.missRate()
     hit_rate = cache.hitRate()
+    stats = None
     if(stats != None and len(stats) != 0):
         items = stats[0][1]
         requsts = stats[0][2]
@@ -103,12 +104,11 @@ def put():
                         (image_value,image_key,))
     db.commit()
     cursor.close()
-    im = Image.open(os.path.join('static/uploads',image_value))
+    im = Image.open(f"static/uploads/{image.filename}")
     im =im.convert('RGB')
     data = io.BytesIO()
     im.save(data, "JPEG")
     encoded_img_data = base64.b64encode(data.getvalue())
-    print(encoded_img_data)
     cache.put(key= image_key, image= encoded_img_data)
     flash('image added successfuly !')
     return render_template("index.html")
@@ -140,7 +140,7 @@ def get():
         data = io.BytesIO()
         im.save(data, "JPEG")
         encoded_img_data = base64.b64encode(data.getvalue())
-        return render_template("twocolumn1.html",image_value= encoded_img_data.decode('utf-8'))
+        return render_template("twocolumn1.html",image_value= encoded_img_data.decode('utf-8')) , 404
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
@@ -187,7 +187,7 @@ def change_policy():
 @app.route('/change_capacity', methods =["POST"])
 def change_capacity():
     new_size = request.form.get("new_size")
-    cache.updateMaxSizeByte(int(new_size))
+    cache.updateMaxSizeMB(int(new_size))
     cursor = db.cursor()
     cursor.execute('UPDATE cache_configuration SET capacity = %s',
                     (new_size,))
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     cursor.execute(f'SELECT * FROM cache_configuration')
     config = cursor.fetchall()
     cursor.close()
-    cache.updateMaxSizeByte(int(config[0][0]))
+    cache.updateMaxSizeMB(int(config[0][0]))
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=storeStats, trigger="interval", seconds=60*10)
     scheduler.start()
