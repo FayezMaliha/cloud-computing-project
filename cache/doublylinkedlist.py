@@ -7,10 +7,10 @@ class Node:
 
 
 class DoublyLinkedList:
-    head = None;
-    tail = None;
+    head = None
+    tail = None
     def __init__(self):
-        self.head = None;
+        self.head = None
         self.tail = None
 
     def addFirst(self, value):
@@ -20,7 +20,7 @@ class DoublyLinkedList:
             self.head.previous = newNode
             self.head = newNode
         else:
-            self.head = Node(value= value);
+            self.head = Node(value= value)
             self.tail = self.head
 
     def addFirst(self, node):
