@@ -151,3 +151,4 @@ class ImageCache():
             output: the size in megabytes
         '''
         return self.size /(1024 * 1024)
+        

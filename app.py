@@ -2,8 +2,8 @@ from math import e
 from flask import Flask,redirect,url_for,render_template,request,flash
 from flask_paginate import Pagination,get_page_args
 from werkzeug.utils import secure_filename
-import mysql.connector
-import mysql
+# import mysql.connector
+# import mysql
 import os
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -11,7 +11,7 @@ from cache.image_cache import ImageCache
 from PIL import Image
 import base64
 import io
-
+import pymysql
 
 app = Flask(
             __name__,
@@ -24,7 +24,7 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 app_dir = os.path.dirname(os.path.abspath(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static/uploads')
 
-db = mysql.connector.connect(
+db = pymysql.connect(host='localhost',
                              user='web',
                              password='qwe@123',
                              database='cloud'
@@ -163,6 +163,7 @@ def threecolumn():
     size = cache.sizeMB()
     miss_rate = cache.missRate()
     hit_rate = cache.hitRate()
+    stats = None
     if stats and len(stats) != 0:
         items = stats[0][1]
         requsts = stats[0][2]
@@ -192,11 +193,15 @@ def put():
     image_key = request.form.get("Key")
     image = request.files.get('filename')
     image_value = secure_filename(image.filename)
+    ext = image_value.split('.')
+    if(ext[1] not in ['jpg', 'png', 'jpeg']):
+        flash('Image type must be png, jpg, jpeg')
+        return render_template("index.html")
     image.save(os.path.join(f"{os.getcwd()}\\static\\uploads", image_value))
     try:
         cursor.execute('INSERT INTO key_image (image_key,image_value) VALUES (%s,%s)',
                         (image_key,image_value,))
-    except mysql.connector.errors.IntegrityError:
+    except pymysql.connector.errors.IntegrityError:
         cursor.execute('UPDATE key_image SET image_value = %s WHERE image_key= %s',
                         (image_value,image_key,))
     db.commit()
@@ -242,7 +247,7 @@ def get():
         return render_template(
                                 "twocolumn1.html",
                                 image_value= encoded_img_data.decode('utf-8')
-                            )
+                            ), 404
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
@@ -402,7 +407,7 @@ if __name__ == "__main__":
     cursor.close()
     cache.updateMaxSizeByte(int(config[0][0]))
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=storeStats, trigger="interval", seconds=60*10)
+    scheduler.add_job(func=storeStats, trigger="interval", seconds=5)
     scheduler.start()
     atexit.register(lambda: scheduler.shutdown())
     app.run(debug=True)
