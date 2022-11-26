@@ -1,4 +1,4 @@
-import sys
+'''import sys
 sys.path.append('../backend')
 from app import app
 from app import cache
@@ -78,3 +78,17 @@ def test_delete_key(client):
         "key_to_delete": AddedImageKey,
     })
     assert response.status_code != 404
+
+
+
+'''
+
+
+
+
+
+
+
+
+a = "['aa']"
+print(a.replace('[','').replace(']',''))

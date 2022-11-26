@@ -2,8 +2,8 @@ from math import e
 from flask import Flask,redirect,url_for,render_template,request,flash
 from flask_paginate import Pagination,get_page_args
 from werkzeug.utils import secure_filename
-# import mysql.connector
-# import mysql
+#import mysql.connector
+#import mysql
 import os
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -12,32 +12,7 @@ from PIL import Image
 import base64
 import io
 import pymysql
-import logging
-import boto3
-from botocore.exceptions import ClientError
-import os
 
-# S3 
-bucketname = "cloud-class-project-bucket"
-def upload_image_s3(image, image_key):
-    s3_client = boto3.client('s3')
-    try:
-        s3_client.upload_fileobj(image, bucketname, f'images/{image_key}')
-    except ClientError as e:
-        logging.error(e)
-        return False
-    return True
-
-def download_image_s3(image_key):
-    
-    # s3 = boto3.client('s3')
-    s3 = boto3.resource('s3')
-    return s3.Object(bucketname, f"images/{image_key}").get()['Body'].read()
-    # s3.download_file(bucketname, f'images/{image_key}', f'{image_key}')
-
-def delete_image_s3(image_key):
-    s3 = boto3.resource('s3')
-    s3.Object(bucketname, f'images/{image_key}').delete()
 
 app = Flask(
             __name__,
@@ -50,7 +25,8 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 app_dir = os.path.dirname(os.path.abspath(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(app_dir, 'static/uploads')
 
-db = pymysql.connect(host='database-1.crpxrpjl8viw.us-east-1.rds.amazonaws.com',
+db = pymysql.connect(
+			     host='database-1.crpxrpjl8viw.us-east-1.rds.amazonaws.com',
                              user='admin',
                              password='databasetest123456',
                              database='cloud'
@@ -133,7 +109,7 @@ def get_keys(keys,offset=0,per_page=10):
                 per_page -> number of elements we want to show per page
         output: list of selected elements from the original list
     '''
-    return [k for k in keys[offset:offset+per_page]]
+    return keys[offset:offset+per_page]
 
 @app.route("/twocolumn2")
 def twocolumn2():
@@ -223,15 +199,17 @@ def put():
     if(ext[1] not in ['jpg', 'png', 'jpeg']):
         flash('Image type must be png, jpg, jpeg')
         return render_template("index.html")
-    upload_image_s3(image= image, image_key= f'{image_value}')
+    image.save(os.path.join(f"{os.getcwd()}/static/uploads", image_value))
     try:
         cursor.execute('INSERT INTO key_image (image_key,image_value) VALUES (%s,%s)',
-                        (f'{image_key}',image_value,))
-    except pymysql.err.IntegrityError:
+                        (image_key,image_value,))
+    except pymysql.connector.errors.IntegrityError:
         cursor.execute('UPDATE key_image SET image_value = %s WHERE image_key= %s',
-                        (f'{image_value}',image_key,))
+                        (image_value,image_key,))
     db.commit()
     cursor.close()
+    encoded_img_data = convert_img_to_base64(os.path.join('static/uploads',image_value))
+    cache.put(key= image_key, image= encoded_img_data)
     flash('image added successfuly !')
     return render_template("index.html")
 
@@ -246,7 +224,6 @@ def get():
         notified 
     '''
     image_key = request.form.get("Key")
-    # image_key = f'{image_key}.jpg'
     cacheResult = cache.get(image_key)
     if cacheResult:
         flash(f'image for key {image_key}')
@@ -258,12 +235,9 @@ def get():
     cursor.execute(f'SELECT * FROM key_image WHERE image_key = %s', (image_key,))
     image_p= cursor.fetchall()
     cursor.close()
-    if len(image_p) != 0:
-        image_value = download_image_s3(image_key=image_p[0][1])
-        encoded_img_data = base64.b64encode(image_value)
-
-            #os.path.join('static/uploads',image_p[0][1]))
-        cache.put(key= image_key, image= image_value)
+    if image_p:
+        encoded_img_data = convert_img_to_base64(os.path.join('static/uploads',image_p[0][1]))
+        cache.put(key= image_key, image= encoded_img_data)
         flash(f'image for key {image_key}')
         return render_template(
                                 "twocolumn1.html",
@@ -273,10 +247,9 @@ def get():
         flash('key doesn\'t exist !!')
         encoded_img_data = convert_img_to_base64('static/uploads/notfound.png')
         return render_template(
-                            "twocolumn1.html",
-                            image_value=encoded_img_data.decode('utf-8')
-                )
-
+                                "twocolumn1.html",
+                                image_value= encoded_img_data.decode('utf-8')
+                            ), 404
 
 @app.route('/delete_key', methods =["POST"])
 def delete_key():
@@ -288,19 +261,6 @@ def delete_key():
         deleted successfuly
     '''
     key = request.form.get('key_to_delete')
-    cursor = db.cursor()
-    cursor.execute(f'SELECT * FROM key_image WHERE image_key = %s', (key,))
-    image_p= cursor.fetchone()
-    cursor.close()
-
-    # print("*"*100)
-    # print(key)
-    # print(image_p)
-    # print("*"*100)
-    # key = key.split('\'') 
-    # keyname = key[1]
-    # key = key[1] + '.' + key[3]
-    delete_image_s3(image_p[0][1])
     if cache.get(key):
         cache.drop(key)
     cursor = db.cursor()
